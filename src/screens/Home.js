@@ -1,60 +1,117 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useNavigation, useIsFocused, useRoute } from '@react-navigation/native';
 
 const Home = () => {
-  const pendingTasks = [
-    { id: 1, task: "Complete Inventory Update", dueDate: "2025-05-07" },
-    { id: 2, task: "Finish Staff Training", dueDate: "2025-05-08" },
-    { id: 3, task: "Approve Leave Requests", dueDate: "2025-05-10" },
-    { id: 4, task: "Prepare Monthly Reports", dueDate: "2025-05-12" },
-    { id: 5, task: "Conduct Team Meeting", dueDate: "2025-05-14" },
-  ];
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const route = useRoute();
 
-  const updateTasks = [
-    { id: 1, task: "Update Inventory", status: "In Progress" },
-    { id: 2, task: "Fix Bug in Mobile App", status: "Completed" },
-    { id: 3, task: "Add New Staff Member", status: "Not Started" },
-  ];
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    if (route.params?.newTask) {
+      const { task, index } = route.params.newTask;
+
+      setTasks((prevTasks) => {
+        // If index is undefined, add new task
+        if (index === undefined) {
+          return [...prevTasks, task];
+        } else {
+          // Edit existing task
+          const updatedTasks = [...prevTasks];
+          updatedTasks[index] = task;
+          return updatedTasks;
+        }
+      });
+
+      // Clear the param so effect doesn't run again unnecessarily
+      navigation.setParams({ newTask: undefined });
+    }
+  }, [route.params?.newTask]);
+
+  const handleDeleteTask = (index) => {
+    Alert.alert(
+      'Delete Task',
+      'Are you sure you want to delete this task?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setTasks((prevTasks) => prevTasks.filter((_, i) => i !== index));
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditTask = (task, index) => {
+    navigation.navigate('CreateTask', { taskToEdit: task, taskIndex: index });
+  };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>Welcome</Text>
+        <Text style={styles.headerText}>Home</Text>
       </View>
 
-      <ScrollView>
-      <View style={styles.taskCountsContainer}>
-        <View style={styles.taskCount}>
-          <Text style={styles.taskLabel}>Pending Tasks</Text>
-          <Text style={styles.taskCountText}>{pendingTasks.length}</Text>
-        </View>
-        <View style={styles.taskCount}>
-          <Text style={styles.taskLabel}>Update Tasks</Text>
-          <Text style={styles.taskCountText}>{updateTasks.length}</Text>
-        </View>
+      {/* Task summary */}
+      <View style={styles.taskSummary}>
+        <Text style={styles.summaryText}>
+          Pending: {tasks.filter(task => !task.completed).length}
+        </Text>
+        <Text style={styles.summaryText}>
+          Completed: {tasks.filter(task => task.completed).length}
+        </Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Pending Tasks</Text>
-          {pendingTasks.map((task) => (
-            <View key={task.id} style={styles.taskItem}>
-              <Text style={styles.taskText}>{task.task}</Text>
-              <Text style={styles.dueDateText}>Due Date: {task.dueDate}</Text>
-            </View>
-          ))}
-        </View>
+      {/* Task List */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {tasks.length === 0 ? (
+          <Text style={styles.noTaskText}>No tasks yet. Create one!</Text>
+        ) : (
+          tasks.map((task, index) => (
+            <View key={index} style={styles.taskItem}>
+              <View style={styles.taskInfo}>
+                <Text style={styles.taskTitle}>{task.title}</Text>
+                <Text style={styles.taskDescription}>{task.description}</Text>
+                <Text style={styles.taskMeta}>
+                  Priority: {task.priority} | Due: {task.dueDate}
+                </Text>
+                <Text style={styles.taskMeta}>
+                  Status: {task.completed ? 'Completed' : 'Pending'}
+                </Text>
+              </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Update Tasks</Text>
-          {updateTasks.map((task) => (
-            <View key={task.id} style={styles.taskItem}>
-              <Text style={styles.taskText}>{task.task}</Text>
-              <Text style={styles.statusText}>Status: {task.status}</Text>
+              <View style={styles.taskButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.editButton]}
+                  onPress={() => handleEditTask(task, index)}
+                >
+                  <Text style={styles.buttonText}>Edit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.deleteButton]}
+                  onPress={() => handleDeleteTask(index)}
+                >
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          ))}
-        </View>
-      </ScrollView>
+          ))
+        )}
+
+        {/* Create Task Button */}
+        <TouchableOpacity
+          style={styles.createTaskButton}
+          onPress={() => navigation.navigate('CreateTask')}
+        >
+          <Text style={styles.createTaskButtonText}>Create Task</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -63,87 +120,63 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
+  container: { flex: 1, backgroundColor: 'white' },
   header: {
     height: 80,
-    backgroundColor: "#2e86de",
-    justifyContent: "center",
+    backgroundColor: '#2e86de',
+    justifyContent: 'center',
     paddingLeft: 20,
     paddingTop: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#d3d3d3",
+    borderBottomColor: '#d3d3d3',
   },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
+  headerText: { fontSize: 24, fontWeight: 'bold', color: 'white' },
+
+  taskSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: '#e8f0fe',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
-  taskCountsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#eaf2f8", // Soft background color for the task section
-    paddingVertical: 20,
-    marginTop: 20,
-    borderRadius: 10, // Rounded corners
-    marginHorizontal: 20, // Add margin to the sides
-    borderWidth: 1, // Border around the task section
-    borderColor: "#d3d3d3", // Light border color
-    shadowColor: "#000", // Shadow for 3D effect
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4, // Elevation for Android
-  },
-  taskCount: {
-    alignItems: "center",
-  },
-  taskLabel: {
+  summaryText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
   },
-  taskCountText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#2e86de",
-    marginTop: 5,
+
+  scrollContent: { padding: 20 },
+  noTaskText: { fontSize: 18, color: '#666', textAlign: 'center', marginTop: 50 },
+
+  taskItem: {
+    backgroundColor: '#f1f3f6',
+    padding: 15,
+    marginBottom: 15,
+    borderRadius: 8,
   },
-  content: {
-    padding: 20,
+  taskInfo: { marginBottom: 10 },
+  taskTitle: { fontSize: 18, fontWeight: 'bold', color: '#2e86de' },
+  taskDescription: { fontSize: 14, color: '#555', marginVertical: 5 },
+  taskMeta: { fontSize: 12, color: '#888' },
+
+  taskButtons: { flexDirection: 'row', justifyContent: 'flex-end' },
+  button: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginLeft: 10,
   },
-  card: {
-    backgroundColor: "#f8f8f8",
+  editButton: { backgroundColor: '#f0ad4e' },
+  deleteButton: { backgroundColor: '#d9534f' },
+  buttonText: { color: 'white', fontWeight: 'bold' },
+
+  createTaskButton: {
+    backgroundColor: '#2e86de',
     padding: 15,
     borderRadius: 8,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    alignItems: 'center',
+    marginTop: 10,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
-  },
-  taskItem: {
-    marginBottom: 10,
-  },
-  taskText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  dueDateText: {
-    fontSize: 14,
-    color: "#555",
-  },
-  statusText: {
-    fontSize: 14,
-    color: "#888",
-  },
+  createTaskButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });

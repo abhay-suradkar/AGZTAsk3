@@ -1,8 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Image, StyleSheet } from 'react-native';
-import Home from './screens/Home';
-import Profile from './screens/Profile';
+import Home from '../src/screens/Home';
+import Profile from '../src/screens/Profile';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,10 +23,7 @@ const TabNavigator = () => {
           return (
             <Image
               source={icon}
-              style={[
-                styles.icon,
-                { tintColor: focused ? '#2e86de' : '#999' },
-              ]}
+              style={[styles.icon, { tintColor: focused ? '#2e86de' : '#999' }]}
               resizeMode="contain"
             />
           );

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const FIREBASE_API_KEY = 'AIzaSyCOiGd5NoRwoBr6Hn6EDZl7ISjdMsSP5LM';
 
@@ -19,11 +19,9 @@ const Signup = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState({}); // Track errors
-
-  // Validation function
+  const [errors, setErrors] = useState({});
   const validate = () => {
-    const tempErrors = {}; // Temporary error holder
+    const tempErrors = {};
     if (!name.trim()) tempErrors.name = 'Name is required';
     if (!email.trim()) tempErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) tempErrors.email = 'Invalid email format';
@@ -34,17 +32,14 @@ const Signup = ({ navigation }) => {
     else if (confirmPassword !== password)
       tempErrors.confirmPassword = 'Passwords do not match';
     
-    // If there are no errors, return true
-    setErrors(tempErrors); // Update errors state
+    setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
 
-  // Handle signup process
   const handleSignup = async () => {
-    if (!validate()) return; // If validation fails, stop
+    if (!validate()) return; 
 
     try {
-      // Step 1: Create account
       const signUpRes = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
         {
@@ -76,7 +71,6 @@ const Signup = ({ navigation }) => {
 
       const idToken = signUpData.idToken;
 
-      // Step 2: Save user's display name
       const updateRes = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:update?key=${FIREBASE_API_KEY}`,
         {
@@ -97,10 +91,9 @@ const Signup = ({ navigation }) => {
         return;
       }
 
-      // Step 3: Save user data in AsyncStorage
-      await AsyncStorage.setItem('userToken', idToken); // Save Firebase token
-      await AsyncStorage.setItem('userName', name.trim()); // Save display name
-      await AsyncStorage.setItem('userEmail', email.trim()); // Save email
+      await AsyncStorage.setItem('userToken', idToken);
+      await AsyncStorage.setItem('userName', name.trim());
+      await AsyncStorage.setItem('userEmail', email.trim());
 
       Alert.alert('Success', 'Account created successfully!');
       navigation.replace('Login');
@@ -124,7 +117,7 @@ const Signup = ({ navigation }) => {
             placeholder="Enter your name"
             value={name}
             onChangeText={setName}
-            error={errors.name} // Pass error message to InputField
+            error={errors.name}
           />
 
           <InputField
@@ -133,7 +126,7 @@ const Signup = ({ navigation }) => {
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
-            error={errors.email} // Pass error message to InputField
+            error={errors.email}
           />
 
           <InputField
@@ -142,7 +135,7 @@ const Signup = ({ navigation }) => {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            error={errors.password} // Pass error message to InputField
+            error={errors.password}
           />
 
           <InputField
@@ -151,7 +144,7 @@ const Signup = ({ navigation }) => {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
-            error={errors.confirmPassword} // Pass error message to InputField
+            error={errors.confirmPassword} 
           />
 
           <Button title="Create Account" onPress={handleSignup} style={styles.button} />
